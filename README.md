@@ -26,6 +26,3 @@ The Rust core runs locally as `usb_watcher_core.exe`. No server, account, teleme
 - Manual refresh
 - Optional 10-second automatic refresh
 - Modern dark Windows desktop interface
-- Native English Inno Setup installer
-- Start Menu shortcut and optional desktop shortcut
-- No report or export feature
