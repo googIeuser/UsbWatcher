@@ -73,14 +73,12 @@ class UsbCoreService {
     String? fifth,
     String? sixth,
   ]) {
-    final parts = <String>[
-      first,
-      second,
-      if (third != null) third,
-      if (fourth != null) fourth,
-      if (fifth != null) fifth,
-      if (sixth != null) sixth,
-    ];
+    final parts = <String>[first, second];
+    for (final part in <String?>[third, fourth, fifth, sixth]) {
+      if (part != null) {
+        parts.add(part);
+      }
+    }
     return parts.join(Platform.pathSeparator);
   }
 }

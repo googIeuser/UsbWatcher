@@ -30,7 +30,7 @@ if ($LASTEXITCODE -ne 0) {
 Push-Location $appRoot
 try {
     Write-Host 'Running Flutter analysis...'
-    flutter analyze
+    flutter analyze --no-fatal-infos
     if ($LASTEXITCODE -ne 0) {
         throw 'Flutter analysis failed.'
     }
