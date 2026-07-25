@@ -48,9 +48,16 @@ New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 $outputName = "USB_Watcher_Setup_$Version"
 
 Write-Host "Building Inno Setup installer with $iscc..."
-& $iscc "/Qp" "/DMyAppVersion=$Version" "/DMySourceDir=$SourceDirectory" "/O$OutputDirectory" "/F$outputName" $installerScript
-if ($LASTEXITCODE -ne 0) {
-    throw "Inno Setup compilation failed with exit code $LASTEXITCODE."
+
+# Capture the native compiler output locally so it cannot leak into this
+# script's success pipeline. The caller expects this script to return only
+# the final installer path.
+$isccOutput = & $iscc "/Qp" "/DMyAppVersion=$Version" "/DMySourceDir=$SourceDirectory" "/O$OutputDirectory" "/F$outputName" $installerScript 2>&1
+$isccExitCode = $LASTEXITCODE
+$isccOutput | ForEach-Object { Write-Host $_ }
+
+if ($isccExitCode -ne 0) {
+    throw "Inno Setup compilation failed with exit code $isccExitCode."
 }
 
 $installerPath = Join-Path $OutputDirectory "$outputName.exe"

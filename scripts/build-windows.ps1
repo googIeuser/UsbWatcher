@@ -92,14 +92,35 @@ Compress-Archive -Path $packageRoot -DestinationPath $zipPath -CompressionLevel 
 Write-Host "Portable Windows package created: $zipPath"
 
 if (-not $SkipInstaller) {
-    $installerPath = & (Join-Path $PSScriptRoot 'build-installer.ps1') -Version $Version -SourceDirectory $packageRoot -OutputDirectory $artifactsRoot
+    $installerResult = @(
+        & (Join-Path $PSScriptRoot 'build-installer.ps1') `
+            -Version $Version `
+            -SourceDirectory $packageRoot `
+            -OutputDirectory $artifactsRoot
+    )
+
+    # Use only a real installer path. This also protects the workflow if a
+    # native compiler ever writes informational text to the success stream.
+    $installerPath = $installerResult |
+        Where-Object {
+            $_ -is [string] -and
+            -not [string]::IsNullOrWhiteSpace($_) -and
+            $_.EndsWith('.exe', [System.StringComparison]::OrdinalIgnoreCase) -and
+            (Test-Path -LiteralPath $_ -PathType Leaf)
+        } |
+        Select-Object -Last 1
+
+    if ([string]::IsNullOrWhiteSpace($installerPath)) {
+        throw 'The installer build completed without returning a valid installer path.'
+    }
 }
 
 $checksumLines = @()
 foreach ($asset in @($zipPath, $installerPath)) {
-    if ($asset -and (Test-Path $asset)) {
-        $hash = Get-FileHash -Path $asset -Algorithm SHA256
-        $checksumLines += "$($hash.Hash.ToLowerInvariant())  $([System.IO.Path]::GetFileName($asset))"
+    if (-not [string]::IsNullOrWhiteSpace($asset) -and (Test-Path -LiteralPath $asset -PathType Leaf)) {
+        $hash = Get-FileHash -LiteralPath $asset -Algorithm SHA256
+        $fileName = [System.IO.Path]::GetFileName($asset)
+        $checksumLines += "$($hash.Hash.ToLowerInvariant())  $fileName"
     }
 }
 $checksumLines | Set-Content -Path $checksumsPath -Encoding ASCII
