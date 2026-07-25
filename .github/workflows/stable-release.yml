@@ -47,10 +47,25 @@ jobs:
           $installer = "artifacts/USB_Watcher_Setup_$version.exe"
           $portable = "artifacts/USB-Watcher-v$version-win-x64.zip"
           $checksums = "artifacts/SHA256SUMS.txt"
+          $notes = @(
+            "## Downloads",
+            "",
+            "- **Installer:** USB_Watcher_Setup_$version.exe",
+            "- **Portable:** USB-Watcher-v$version-win-x64.zip",
+            "- **Checksums:** SHA256SUMS.txt",
+            "",
+            "The portable edition does not require installation. Extract the ZIP and start usb_watcher.exe."
+          ) -join [Environment]::NewLine
 
           gh release view $tag 2>$null
           if ($LASTEXITCODE -eq 0) {
             throw "Release $tag already exists. Use a new version number."
           }
 
-          gh release create $tag $installer $portable $checksums --title "USB Watcher $tag" --generate-notes --latest
+          $notesPath = Join-Path $env:RUNNER_TEMP "usb-watcher-release-notes.md"
+          $notes | Set-Content -Path $notesPath -Encoding UTF8
+
+          gh release create $tag $installer $portable $checksums `
+            --title "USB Watcher $tag" `
+            --notes-file $notesPath `
+            --latest

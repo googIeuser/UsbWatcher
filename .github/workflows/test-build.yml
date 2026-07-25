@@ -34,13 +34,26 @@ jobs:
         shell: pwsh
         run: .\scripts\build-windows.ps1 -Version "${{ inputs.version }}"
 
-      - name: Upload test build
+      - name: Upload Windows installer
         uses: actions/upload-artifact@v4
         with:
-          name: USB-Watcher-Test-v${{ inputs.version }}
-          path: |
-            artifacts/USB_Watcher_Setup_${{ inputs.version }}.exe
-            artifacts/USB-Watcher-v${{ inputs.version }}-win-x64.zip
-            artifacts/SHA256SUMS.txt
+          name: USB-Watcher-Installer-v${{ inputs.version }}
+          path: artifacts/USB_Watcher_Setup_${{ inputs.version }}.exe
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Upload portable Windows package
+        uses: actions/upload-artifact@v4
+        with:
+          name: USB-Watcher-Portable-v${{ inputs.version }}-win-x64
+          path: artifacts/USB-Watcher-v${{ inputs.version }}-win-x64.zip
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Upload checksums
+        uses: actions/upload-artifact@v4
+        with:
+          name: USB-Watcher-Checksums-v${{ inputs.version }}
+          path: artifacts/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 1
