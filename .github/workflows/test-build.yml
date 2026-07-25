@@ -1,0 +1,46 @@
+name: Test Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version number without the v prefix
+        required: true
+        default: 0.1.0
+        type: string
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --no-progress -y
+
+      - name: Build Windows packages
+        shell: pwsh
+        run: .\scripts\build-windows.ps1 -Version "${{ inputs.version }}"
+
+      - name: Upload test build
+        uses: actions/upload-artifact@v4
+        with:
+          name: USB-Watcher-Test-v${{ inputs.version }}
+          path: |
+            artifacts/USB_Watcher_Setup_${{ inputs.version }}.exe
+            artifacts/USB-Watcher-v${{ inputs.version }}-win-x64.zip
+            artifacts/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 1
